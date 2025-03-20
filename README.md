@@ -1,6 +1,6 @@
 # DiffRhythm Reference Implementation
 
-This repository provides a reference implementation for using DiffRhythm, a music generation model. It includes a simple interface to generate music from lyrics text.
+This repository provides a reference implementation for using DiffRhythm, a music generation model.
 
 ## Setup
 
@@ -10,19 +10,26 @@ git clone https://github.com/anurag12-webster/diffrhythm-ref.git
 cd diffrhythm-ref
 ```
 
-2. Install DiffRhythm:
+2. Install DiffRhythm and its dependencies:
 ```bash
 cd DiffRhythm
 pip install -e .
-cd ..
 ```
 
 ## Usage
 
-The repository provides a simple interface through `tasks.py` to generate music:
+You can use DiffRhythm directly by importing from the app module:
 
 ```python
-from tasks import generate_music
+from diffrhythm.infer.infer import inference
+from diffrhythm.infer.infer_utils import (
+    get_reference_latent,
+    get_lrc_token,
+    get_audio_style_prompt,
+    get_text_style_prompt,
+    prepare_model,
+    get_negative_style_prompt
+)
 
 # Example lyrics with timestamps
 text = """
@@ -31,12 +38,26 @@ text = """
 [00:06.00]这是第三行歌词
 """
 
+# Initialize models
+device = "cuda"  # or "cpu"
+cfm, cfm_full, tokenizer, muq, vae = prepare_model(device)
+
+# Get style prompts (optional)
+text_style = get_text_style_prompt(muq, "happy and energetic")
+negative_style = get_negative_style_prompt(device)
+
 # Generate music
-generate_music(
+inference(
+    cfm=cfm,
+    cfm_full=cfm_full,
+    tokenizer=tokenizer,
+    muq=muq,
+    vae=vae,
     text=text,
-    audio_style_path="path/to/style/audio.wav",  # Optional: reference audio for style
-    text_style_prompt="happy and energetic",      # Optional: text description of style
-    output_path="generated_music.wav"             # Output audio file path
+    text_style=text_style,
+    negative_style=negative_style,
+    device=device,
+    output_path="generated_music.wav"
 )
 ```
 
@@ -45,14 +66,28 @@ generate_music(
 - `text`: The lyrics text with timestamps
 - `audio_style_path`: (Optional) Path to an audio file to use as style reference
 - `text_style_prompt`: (Optional) Text description of the desired style
-- `device`: (Optional) Device to run inference on ("cuda" or "cpu")
-- `output_path`: (Optional) Path to save the generated audio
+- `device`: Device to run inference on ("cuda" or "cpu")
+- `output_path`: Path to save the generated audio
 
 ## Requirements
 
 - Python >= 3.8
 - CUDA-capable GPU (recommended)
-- See `DiffRhythm/setup.py` for full list of dependencies
+- Dependencies:
+  - torch
+  - numpy
+  - librosa
+  - mutagen
+  - huggingface_hub
+  - muq
+  - wandb
+  - accelerate
+  - ema_pytorch
+  - bitsandbytes
+  - pypinyin
+  - jieba
+  - x-transformers
+  - safetensors
 
 ## License
 
